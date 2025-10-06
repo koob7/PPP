@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QApplication, QGridLayout, QTabWidget, QWidget
-from PyQt6.QtWidgets import QLabel
+from PyQt6.QtWidgets import QLabel, QLineEdit, QPushButton, QTextEdit
 from PyQt6.QtWidgets import QMainWindow
 from PyQt6.QtWidgets import QStatusBar
 from PyQt6.QtWidgets import QToolBar
@@ -36,6 +36,23 @@ class Window(QMainWindow):
         self.task1Menu.addAction(self.actionOpen)
 
         self.task2Menu = self.menu.addMenu("Task 2")
+        self.actionOpen = QAction("Clear", self)
+        self.actionOpen.setShortcut("Ctrl+W")
+        self.actionOpen.triggered.connect(self.ClearTxtBox)
+        self.task2Menu.addAction(self.actionOpen)
+        self.actionOpen = QAction("Open", self)
+        self.actionOpen.setShortcut("Ctrl+O")
+        self.actionOpen.triggered.connect(self.OpenTxtFile)
+        self.task2Menu.addAction(self.actionOpen)
+        self.actionOpen = QAction("Save", self)
+        self.actionOpen.setShortcut("Ctrl+S")
+        self.actionOpen.triggered.connect(self.SaveTxtFile)
+        self.task2Menu.addAction(self.actionOpen)
+        self.actionOpen = QAction("Save As", self)
+        self.actionOpen.setShortcut("Ctrl+K")
+        self.actionOpen.triggered.connect(self.SaveAsTxtFile)
+        self.task2Menu.addAction(self.actionOpen)
+
         self.task3Menu = self.menu.addMenu("Task 3")
         # Dodanie do menu File pozycji zamykającej aplikacje
 
@@ -62,7 +79,34 @@ class Window(QMainWindow):
 
         self.tab_2.layout = None
         self.tab_2.layout = QGridLayout()
-        self.tab_2.layout.addWidget(QLabel("Zawartość drugiej zakładki"), 0, 0)
+
+        # Dodanie etykiety i pola tekstowego jednoliniowego
+        self.tab_2.layout.addWidget(QLabel("Tytuł:"), 0, 0)
+        self.title_field = QLineEdit()
+        self.tab_2.layout.addWidget(self.title_field, 0, 1, 1, 2)
+
+        # Dodanie etykiety i pola tekstowego wieloliniowego
+        self.tab_2.layout.addWidget(QLabel("Treść:"), 1, 0)
+        self.content_field = QTextEdit()
+        self.tab_2.layout.addWidget(self.content_field, 1, 1, 1, 2)
+
+        # Dodanie przycisków
+        self.open_button = QPushButton("Open")
+        self.save_button = QPushButton("Zapisz")
+        self.save_as_button = QPushButton("Save As")
+        self.clear_button = QPushButton("Wyczyść")
+
+        # Podłączenie funkcji do przycisków
+        self.open_button.clicked.connect(self.OpenTxtFile)
+        self.save_button.clicked.connect(self.SaveTxtFile)
+        self.save_as_button.clicked.connect(self.SaveAsTxtFile)
+        self.clear_button.clicked.connect(self.ClearTxtBox)
+
+        self.tab_2.layout.addWidget(self.open_button, 2, 0)
+        self.tab_2.layout.addWidget(self.save_button, 2, 1)
+        self.tab_2.layout.addWidget(self.save_as_button, 2, 2)
+        self.tab_2.layout.addWidget(self.clear_button, 2, 3)
+
         self.tab_2.setLayout(self.tab_2.layout)
 
         # Dodanie paska stanu do okna
@@ -81,6 +125,98 @@ class Window(QMainWindow):
                 image_path = selected_files[0]
                 # Tu możesz dodać kod do wyświetlania obrazu w zakładce 1
                 self.statusBar().showMessage(f"Wybrano plik: {image_path}")
+
+    # Funkcja czyszcząca pola tekstowe
+    def ClearTxtBox(self):
+        self.title_field.clear()
+        self.content_field.clear()
+        self.statusBar().showMessage("Wyczyszczono pola tekstowe")
+
+    def OpenTxtFile(self):
+        file_dialog = QFileDialog(self)
+        file_dialog.setNameFilter("Text files (*.txt);;All files (*.*)")
+        if file_dialog.exec():
+            selected_files = file_dialog.selectedFiles()
+            if selected_files:
+                txt_path = selected_files[0]
+                try:
+                    with open(txt_path, "r", encoding="utf-8") as file:
+                        content = file.read()
+                        # Wstaw nazwę pliku jako tytuł
+                        import os
+
+                        filename = os.path.basename(txt_path)
+                        self.title_field.setText(filename)
+                        # Wstaw zawartość pliku do pola tekstowego
+                        self.content_field.setPlainText(content)
+                        self.statusBar().showMessage(f"Otwarto plik: {txt_path}")
+                except Exception as e:
+                    self.statusBar().showMessage(
+                        f"Błąd podczas otwierania pliku: {str(e)}"
+                    )
+
+    # Funkcja zapisująca zawartość pól tekstowych
+    def SaveTxtFile(self):
+        title = self.title_field.text()
+        content = self.content_field.toPlainText()
+
+        if not title and not content:
+            self.statusBar().showMessage("Brak treści do zapisania")
+            return
+
+        # Jeśli brak tytułu, użyj domyślnej nazwy
+        if not title:
+            title = "untitled.txt"
+
+        # Sprawdź czy tytuł zawiera rozszerzenie, jeśli nie - dodaj .txt
+        if not title.endswith(".txt"):
+            title += ".txt"
+
+        try:
+            with open(title, "w", encoding="utf-8") as file:
+                file.write(content)
+            self.statusBar().showMessage(f"Zapisano plik: {title}")
+        except Exception as e:
+            self.statusBar().showMessage(f"Błąd podczas zapisywania: {str(e)}")
+
+    def SaveAsTxtFile(self):
+        title = self.title_field.text()
+        content = self.content_field.toPlainText()
+
+        if not title and not content:
+            self.statusBar().showMessage("Brak treści do zapisania")
+            return
+
+        # Okno dialogowe do wyboru lokalizacji i nazwy pliku
+        file_dialog = QFileDialog(self)
+        file_dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
+        file_dialog.setNameFilter("Text files (*.txt);;All files (*.*)")
+        file_dialog.setDefaultSuffix("txt")
+
+        # Jeśli jest tytuł, użyj go jako domyślną nazwę
+        if title:
+            # Usuń rozszerzenie jeśli już istnieje, zostanie dodane automatycznie
+            if title.endswith(".txt"):
+                title = title[:-4]
+            file_dialog.selectFile(title)
+
+        if file_dialog.exec():
+            selected_files = file_dialog.selectedFiles()
+            if selected_files:
+                file_path = selected_files[0]
+                try:
+                    with open(file_path, "w", encoding="utf-8") as file:
+                        file.write(content)
+
+                    # Zaktualizuj tytuł na podstawie wybranej nazwy pliku
+                    import os
+
+                    filename = os.path.basename(file_path)
+                    self.title_field.setText(filename)
+
+                    self.statusBar().showMessage(f"Zapisano plik jako: {file_path}")
+                except Exception as e:
+                    self.statusBar().showMessage(f"Błąd podczas zapisywania: {str(e)}")
 
 
 # Uruchomienie okna
