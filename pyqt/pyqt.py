@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import QStatusBar
 from PyQt6.QtWidgets import QToolBar
 from PyQt6.QtWidgets import QFileDialog
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon, QAction, QPixmap
+from PyQt6.QtGui import QIcon, QAction, QPixmap, QKeySequence
 
 # Tworzenie klasy głównego okna aplikacji dziedziczącej po QMainWindow
 
@@ -27,37 +27,37 @@ class Window(QMainWindow):
         # Dodanie do paska listy rozwijalnej o nazwie File
         self.fileMenu = self.menu.addMenu("File")
         self.actionExit = QAction("Exit", self)
-        self.actionExit.setShortcut("Ctrl+Q")
+        self.actionExit.setShortcut(QKeySequence("Ctrl+Q"))
         self.actionExit.triggered.connect(self.close)
         self.fileMenu.addAction(self.actionExit)
 
         self.task1Menu = self.menu.addMenu("Task 1")
         self.actionOpen = QAction("Open file", self)
-        self.actionOpen.setShortcut("Ctrl+G")
+        self.actionOpen.setShortcut(QKeySequence("Ctrl+G"))
         self.actionOpen.triggered.connect(self.openImageDialog)
         self.task1Menu.addAction(self.actionOpen)
 
         self.task2Menu = self.menu.addMenu("Task 2")
         self.actionOpen = QAction("Clear", self)
-        self.actionOpen.setShortcut("Ctrl+W")
+        self.actionOpen.setShortcut(QKeySequence("Ctrl+W"))
         self.actionOpen.triggered.connect(self.ClearTxtBox)
         self.task2Menu.addAction(self.actionOpen)
         self.actionOpen = QAction("Open", self)
-        self.actionOpen.setShortcut("Ctrl+O")
+        self.actionOpen.setShortcut(QKeySequence("Ctrl+O"))
         self.actionOpen.triggered.connect(self.OpenTxtFile)
         self.task2Menu.addAction(self.actionOpen)
         self.actionOpen = QAction("Save", self)
-        self.actionOpen.setShortcut("Ctrl+S")
+        self.actionOpen.setShortcut(QKeySequence("Ctrl+S"))
         self.actionOpen.triggered.connect(self.SaveTxtFile)
         self.task2Menu.addAction(self.actionOpen)
         self.actionOpen = QAction("Save As", self)
-        self.actionOpen.setShortcut("Ctrl+K")
+        self.actionOpen.setShortcut(QKeySequence("Ctrl+K"))
         self.actionOpen.triggered.connect(self.SaveAsTxtFile)
         self.task2Menu.addAction(self.actionOpen)
 
         self.task3Menu = self.menu.addMenu("Task 3")
         self.actionClearTab3 = QAction("Clear", self)
-        self.actionClearTab3.setShortcut("Ctrl+Q")
+        self.actionClearTab3.setShortcut(QKeySequence("Ctrl+Q"))
         self.actionClearTab3.triggered.connect(self.clearTab3Fields)
         self.task3Menu.addAction(self.actionClearTab3)
         # Dodanie do menu File pozycji zamykającej aplikacje
