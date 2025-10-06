@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QGridLayout, QTabWidget, QWidget
+from PyQt6.QtWidgets import QApplication, QGridLayout, QTabWidget, QWidget, QSpinBox
 from PyQt6.QtWidgets import QLabel, QLineEdit, QPushButton, QTextEdit
 from PyQt6.QtWidgets import QMainWindow
 from PyQt6.QtWidgets import QStatusBar
@@ -126,10 +126,10 @@ class Window(QMainWindow):
         self.tab_3.layout.addWidget(self.field_b, 1, 1)
 
         self.tab_3.layout.addWidget(QLabel("Pole C:"), 2, 0)
-        self.field_c = QLineEdit()
-        self.field_c.setPlaceholderText("Wprowadź liczbę")
-        self.field_c.textChanged.connect(self.validateNumericInput)
-        self.field_c.textChanged.connect(self.updateConcatenatedField)
+
+        self.field_c = QSpinBox()
+        self.field_c.setValue(0)
+        self.field_c.valueChanged.connect(self.updateConcatenatedField)
         self.tab_3.layout.addWidget(self.field_c, 2, 1)
 
         self.tab_3.layout.addWidget(QLabel("Pole A + B + C:"), 3, 0)
