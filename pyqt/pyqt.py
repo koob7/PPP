@@ -4,7 +4,8 @@ from PyQt6.QtWidgets import QMainWindow
 from PyQt6.QtWidgets import QStatusBar
 from PyQt6.QtWidgets import QToolBar
 from PyQt6.QtWidgets import QFileDialog
-from PyQt6.QtGui import QIcon, QAction
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon, QAction, QPixmap
 
 # Tworzenie klasy głównego okna aplikacji dziedziczącej po QMainWindow
 
@@ -13,6 +14,7 @@ class Window(QMainWindow):
     # Dodanie konstruktora przyjmującego okno nadrzędne
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.image_path = None
         self.setWindowTitle("PyQt6 Lab")
         self.setGeometry(100, 100, 1240, 720)
         self.createMenu()
@@ -36,6 +38,7 @@ class Window(QMainWindow):
         self.task1Menu.addAction(self.actionOpen)
 
         self.task2Menu = self.menu.addMenu("Task 2")
+
         self.task3Menu = self.menu.addMenu("Task 3")
         # Dodanie do menu File pozycji zamykającej aplikacje
 
@@ -59,6 +62,9 @@ class Window(QMainWindow):
 
         self.tab_1.layout = None
         self.tab_1.layout = QGridLayout()
+        self.tab_1.image_label = QLabel("Brak obrazu")
+        self.tab_1.layout.addWidget(self.tab_1.image_label, 0, 0)
+        self.tab_1.setLayout(self.tab_1.layout)
 
         self.tab_2.layout = None
         self.tab_2.layout = QGridLayout()
@@ -78,9 +84,27 @@ class Window(QMainWindow):
         if file_dialog.exec():
             selected_files = file_dialog.selectedFiles()
             if selected_files:
-                image_path = selected_files[0]
+                self.image_path = selected_files[0]
                 # Tu możesz dodać kod do wyświetlania obrazu w zakładce 1
-                self.statusBar().showMessage(f"Wybrano plik: {image_path}")
+                self.statusBar().showMessage(f"Wybrano plik: {self.image_path}")
+                self.displayImageOnTab1(self.image_path)
+
+    def displayImageOnTab1(self, image_path):
+        pixmap = QPixmap(image_path)
+        if not pixmap.isNull():
+            self.tab_1.image_label.setPixmap(
+                pixmap.scaled(
+                    400,
+                    400,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+            )
+            self.tab_1.image_label.setText(
+                ""
+            )  # Usunięcie tekstu jeśli obraz jest wyświetlany
+        else:
+            self.tab_1.image_label.setText("Nie można załadować obrazu")
 
 
 # Uruchomienie okna
