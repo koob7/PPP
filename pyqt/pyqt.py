@@ -59,7 +59,6 @@ class Window(QMainWindow):
         self.actionClearTab3.setShortcut(QKeySequence("Ctrl+Q"))
         self.actionClearTab3.triggered.connect(self.clearTab3Fields)
         self.task3Menu.addAction(self.actionClearTab3)
-        # Dodanie do menu File pozycji zamykającej aplikacje
 
     # Funkcja dodająca wenętrzeny widżet do okna
     def createTabs(self):
@@ -88,23 +87,19 @@ class Window(QMainWindow):
         self.tab_2.layout = None
         self.tab_2.layout = QGridLayout()
 
-        # Dodanie etykiety i pola tekstowego jednoliniowego
         self.tab_2.layout.addWidget(QLabel("Tytuł:"), 0, 0)
         self.title_field = QLineEdit()
         self.tab_2.layout.addWidget(self.title_field, 0, 1, 1, 2)
 
-        # Dodanie etykiety i pola tekstowego wieloliniowego
         self.tab_2.layout.addWidget(QLabel("Treść:"), 1, 0)
         self.content_field = QTextEdit()
         self.tab_2.layout.addWidget(self.content_field, 1, 1, 1, 2)
 
-        # Dodanie przycisków
         self.open_button = QPushButton("Open")
         self.save_button = QPushButton("Zapisz")
         self.save_as_button = QPushButton("Save As")
         self.clear_button = QPushButton("Wyczyść")
 
-        # Podłączenie funkcji do przycisków
         self.open_button.clicked.connect(self.OpenTxtFile)
         self.save_button.clicked.connect(self.SaveTxtFile)
         self.save_as_button.clicked.connect(self.SaveAsTxtFile)
@@ -117,11 +112,9 @@ class Window(QMainWindow):
 
         self.tab_2.setLayout(self.tab_2.layout)
 
-        # Konfiguracja trzeciej zakładki
         self.tab_3.layout = None
         self.tab_3.layout = QGridLayout()
 
-        # Dodanie pól dla zakładki 3
         self.tab_3.layout.addWidget(QLabel("Pole A:"), 0, 0)
         self.field_a = QLineEdit()
         self.field_a.textChanged.connect(self.updateConcatenatedField)
@@ -134,7 +127,6 @@ class Window(QMainWindow):
 
         self.tab_3.layout.addWidget(QLabel("Pole C:"), 2, 0)
         self.field_c = QLineEdit()
-        # Ustawienie pola C jako numerycznego
         self.field_c.setPlaceholderText("Wprowadź liczbę")
         self.field_c.textChanged.connect(self.validateNumericInput)
         self.field_c.textChanged.connect(self.updateConcatenatedField)
@@ -145,7 +137,6 @@ class Window(QMainWindow):
         self.field_concatenated.setReadOnly(True)  # Pole tylko do odczytu
         self.tab_3.layout.addWidget(self.field_concatenated, 3, 1)
 
-        # Przycisk Clear dla zakładki 3
         self.clear_tab3_button = QPushButton("Clear (Ctrl+Q)")
         self.clear_tab3_button.clicked.connect(self.clearTab3Fields)
         self.tab_3.layout.addWidget(self.clear_tab3_button, 4, 0, 1, 2)
@@ -166,7 +157,6 @@ class Window(QMainWindow):
             selected_files = file_dialog.selectedFiles()
             if selected_files:
                 self.image_path = selected_files[0]
-                # Tu możesz dodać kod do wyświetlania obrazu w zakładce 1
                 self.statusBar().showMessage(f"Wybrano plik: {self.image_path}")
                 self.displayImageOnTab1(self.image_path)
 
@@ -187,7 +177,6 @@ class Window(QMainWindow):
         else:
             self.tab_1.image_label.setText("Nie można załadować obrazu")
 
-    # Funkcja czyszcząca pola tekstowe
     def ClearTxtBox(self):
         self.title_field.clear()
         self.content_field.clear()
@@ -216,7 +205,6 @@ class Window(QMainWindow):
                         f"Błąd podczas otwierania pliku: {str(e)}"
                     )
 
-    # Funkcja zapisująca zawartość pól tekstowych
     def SaveTxtFile(self):
         title = self.title_field.text()
         content = self.content_field.toPlainText()
@@ -225,11 +213,9 @@ class Window(QMainWindow):
             self.statusBar().showMessage("Brak treści do zapisania")
             return
 
-        # Jeśli brak tytułu, użyj domyślnej nazwy
         if not title:
             title = "untitled.txt"
 
-        # Sprawdź czy tytuł zawiera rozszerzenie, jeśli nie - dodaj .txt
         if not title.endswith(".txt"):
             title += ".txt"
 
@@ -248,15 +234,12 @@ class Window(QMainWindow):
             self.statusBar().showMessage("Brak treści do zapisania")
             return
 
-        # Okno dialogowe do wyboru lokalizacji i nazwy pliku
         file_dialog = QFileDialog(self)
         file_dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
         file_dialog.setNameFilter("Text files (*.txt);;All files (*.*)")
         file_dialog.setDefaultSuffix("txt")
 
-        # Jeśli jest tytuł, użyj go jako domyślną nazwę
         if title:
-            # Usuń rozszerzenie jeśli już istnieje, zostanie dodane automatycznie
             if title.endswith(".txt"):
                 title = title[:-4]
             file_dialog.selectFile(title)
@@ -269,7 +252,6 @@ class Window(QMainWindow):
                     with open(file_path, "w", encoding="utf-8") as file:
                         file.write(content)
 
-                    # Zaktualizuj tytuł na podstawie wybranej nazwy pliku
                     import os
 
                     filename = os.path.basename(file_path)
@@ -279,7 +261,6 @@ class Window(QMainWindow):
                 except Exception as e:
                     self.statusBar().showMessage(f"Błąd podczas zapisywania: {str(e)}")
 
-    # Funkcja czyszcząca pola tekstowe
     def ClearTxtBox(self):
         self.title_field.clear()
         self.content_field.clear()
@@ -295,12 +276,10 @@ class Window(QMainWindow):
                 try:
                     with open(txt_path, "r", encoding="utf-8") as file:
                         content = file.read()
-                        # Wstaw nazwę pliku jako tytuł
                         import os
 
                         filename = os.path.basename(txt_path)
                         self.title_field.setText(filename)
-                        # Wstaw zawartość pliku do pola tekstowego
                         self.content_field.setPlainText(content)
                         self.statusBar().showMessage(f"Otwarto plik: {txt_path}")
                 except Exception as e:
@@ -308,7 +287,6 @@ class Window(QMainWindow):
                         f"Błąd podczas otwierania pliku: {str(e)}"
                     )
 
-    # Funkcja zapisująca zawartość pól tekstowych
     def SaveTxtFile(self):
         title = self.title_field.text()
         content = self.content_field.toPlainText()
@@ -317,11 +295,9 @@ class Window(QMainWindow):
             self.statusBar().showMessage("Brak treści do zapisania")
             return
 
-        # Jeśli brak tytułu, użyj domyślnej nazwy
         if not title:
             title = "untitled.txt"
 
-        # Sprawdź czy tytuł zawiera rozszerzenie, jeśli nie - dodaj .txt
         if not title.endswith(".txt"):
             title += ".txt"
 
@@ -340,15 +316,12 @@ class Window(QMainWindow):
             self.statusBar().showMessage("Brak treści do zapisania")
             return
 
-        # Okno dialogowe do wyboru lokalizacji i nazwy pliku
         file_dialog = QFileDialog(self)
         file_dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
         file_dialog.setNameFilter("Text files (*.txt);;All files (*.*)")
         file_dialog.setDefaultSuffix("txt")
 
-        # Jeśli jest tytuł, użyj go jako domyślną nazwę
         if title:
-            # Usuń rozszerzenie jeśli już istnieje, zostanie dodane automatycznie
             if title.endswith(".txt"):
                 title = title[:-4]
             file_dialog.selectFile(title)
@@ -360,8 +333,6 @@ class Window(QMainWindow):
                 try:
                     with open(file_path, "w", encoding="utf-8") as file:
                         file.write(content)
-
-                    # Zaktualizuj tytuł na podstawie wybranej nazwy pliku
                     import os
 
                     filename = os.path.basename(file_path)
@@ -371,12 +342,10 @@ class Window(QMainWindow):
                 except Exception as e:
                     self.statusBar().showMessage(f"Błąd podczas zapisywania: {str(e)}")
 
-    # Funkcje dla zakładki 3
     def validateNumericInput(self):
         """Walidacja pola numerycznego C"""
         text = self.field_c.text()
         if text and not text.replace(".", "").replace("-", "").isdigit():
-            # Usuń ostatni znak jeśli nie jest liczbą
             self.field_c.setText(text[:-1])
 
     def updateConcatenatedField(self):
