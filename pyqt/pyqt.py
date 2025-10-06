@@ -134,7 +134,7 @@ class Window(QMainWindow):
 
         self.tab_3.layout.addWidget(QLabel("Pole A + B + C:"), 3, 0)
         self.field_concatenated = QLineEdit()
-        self.field_concatenated.setReadOnly(True)  # Pole tylko do odczytu
+        self.field_concatenated.setReadOnly(True)
         self.tab_3.layout.addWidget(self.field_concatenated, 3, 1)
 
         self.clear_tab3_button = QPushButton("Clear (Ctrl+Q)")
@@ -171,9 +171,7 @@ class Window(QMainWindow):
                     Qt.TransformationMode.SmoothTransformation,
                 )
             )
-            self.tab_1.image_label.setText(
-                ""
-            )  # Usunięcie tekstu jeśli obraz jest wyświetlany
+            self.tab_1.image_label.setText("")
         else:
             self.tab_1.image_label.setText("Nie można załadować obrazu")
 
@@ -192,12 +190,10 @@ class Window(QMainWindow):
                 try:
                     with open(txt_path, "r", encoding="utf-8") as file:
                         content = file.read()
-                        # Wstaw nazwę pliku jako tytuł
                         import os
 
                         filename = os.path.basename(txt_path)
                         self.title_field.setText(filename)
-                        # Wstaw zawartość pliku do pola tekstowego
                         self.content_field.setPlainText(content)
                         self.statusBar().showMessage(f"Otwarto plik: {txt_path}")
                 except Exception as e:
@@ -343,13 +339,11 @@ class Window(QMainWindow):
                     self.statusBar().showMessage(f"Błąd podczas zapisywania: {str(e)}")
 
     def validateNumericInput(self):
-        """Walidacja pola numerycznego C"""
         text = self.field_c.text()
         if text and not text.replace(".", "").replace("-", "").isdigit():
             self.field_c.setText(text[:-1])
 
     def updateConcatenatedField(self):
-        """Aktualizuje pole łączące A + B + C"""
         field_a_text = self.field_a.text()
         field_b_text = self.field_b.text()
         field_c_text = self.field_c.text()
@@ -358,7 +352,6 @@ class Window(QMainWindow):
         self.field_concatenated.setText(concatenated)
 
     def clearTab3Fields(self):
-        """Czyści wszystkie pola w zakładce 3"""
         self.field_a.clear()
         self.field_b.clear()
         self.field_c.clear()
