@@ -56,6 +56,10 @@ class Window(QMainWindow):
         self.task2Menu.addAction(self.actionOpen)
 
         self.task3Menu = self.menu.addMenu("Task 3")
+        self.actionClearTab3 = QAction("Clear", self)
+        self.actionClearTab3.setShortcut("Ctrl+Q")
+        self.actionClearTab3.triggered.connect(self.clearTab3Fields)
+        self.task3Menu.addAction(self.actionClearTab3)
         # Dodanie do menu File pozycji zamykającej aplikacje
 
     # Funkcja dodająca wenętrzeny widżet do okna
@@ -113,6 +117,41 @@ class Window(QMainWindow):
         self.tab_2.layout.addWidget(self.clear_button, 2, 3)
 
         self.tab_2.setLayout(self.tab_2.layout)
+
+        # Konfiguracja trzeciej zakładki
+        self.tab_3.layout = None
+        self.tab_3.layout = QGridLayout()
+
+        # Dodanie pól dla zakładki 3
+        self.tab_3.layout.addWidget(QLabel("Pole A:"), 0, 0)
+        self.field_a = QLineEdit()
+        self.field_a.textChanged.connect(self.updateConcatenatedField)
+        self.tab_3.layout.addWidget(self.field_a, 0, 1)
+
+        self.tab_3.layout.addWidget(QLabel("Pole B:"), 1, 0)
+        self.field_b = QLineEdit()
+        self.field_b.textChanged.connect(self.updateConcatenatedField)
+        self.tab_3.layout.addWidget(self.field_b, 1, 1)
+
+        self.tab_3.layout.addWidget(QLabel("Pole C:"), 2, 0)
+        self.field_c = QLineEdit()
+        # Ustawienie pola C jako numerycznego
+        self.field_c.setPlaceholderText("Wprowadź liczbę")
+        self.field_c.textChanged.connect(self.validateNumericInput)
+        self.field_c.textChanged.connect(self.updateConcatenatedField)
+        self.tab_3.layout.addWidget(self.field_c, 2, 1)
+
+        self.tab_3.layout.addWidget(QLabel("Pole A + B + C:"), 3, 0)
+        self.field_concatenated = QLineEdit()
+        self.field_concatenated.setReadOnly(True)  # Pole tylko do odczytu
+        self.tab_3.layout.addWidget(self.field_concatenated, 3, 1)
+
+        # Przycisk Clear dla zakładki 3
+        self.clear_tab3_button = QPushButton("Clear (Ctrl+Q)")
+        self.clear_tab3_button.clicked.connect(self.clearTab3Fields)
+        self.tab_3.layout.addWidget(self.clear_tab3_button, 4, 0, 1, 2)
+
+        self.tab_3.setLayout(self.tab_3.layout)
 
         # Dodanie paska stanu do okna
         self.setStatusBar(QStatusBar(self))
@@ -332,6 +371,31 @@ class Window(QMainWindow):
                     self.statusBar().showMessage(f"Zapisano plik jako: {file_path}")
                 except Exception as e:
                     self.statusBar().showMessage(f"Błąd podczas zapisywania: {str(e)}")
+
+    # Funkcje dla zakładki 3
+    def validateNumericInput(self):
+        """Walidacja pola numerycznego C"""
+        text = self.field_c.text()
+        if text and not text.replace(".", "").replace("-", "").isdigit():
+            # Usuń ostatni znak jeśli nie jest liczbą
+            self.field_c.setText(text[:-1])
+
+    def updateConcatenatedField(self):
+        """Aktualizuje pole łączące A + B + C"""
+        field_a_text = self.field_a.text()
+        field_b_text = self.field_b.text()
+        field_c_text = self.field_c.text()
+
+        concatenated = field_a_text + field_b_text + field_c_text
+        self.field_concatenated.setText(concatenated)
+
+    def clearTab3Fields(self):
+        """Czyści wszystkie pola w zakładce 3"""
+        self.field_a.clear()
+        self.field_b.clear()
+        self.field_c.clear()
+        self.field_concatenated.clear()
+        self.statusBar().showMessage("Wyczyszczono pola zakładki 3")
 
 
 # Uruchomienie okna
