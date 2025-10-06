@@ -4,7 +4,8 @@ from PyQt6.QtWidgets import QMainWindow
 from PyQt6.QtWidgets import QStatusBar
 from PyQt6.QtWidgets import QToolBar
 from PyQt6.QtWidgets import QFileDialog
-from PyQt6.QtGui import QIcon, QAction
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon, QAction, QPixmap
 
 # Tworzenie klasy głównego okna aplikacji dziedziczącej po QMainWindow
 
@@ -13,6 +14,7 @@ class Window(QMainWindow):
     # Dodanie konstruktora przyjmującego okno nadrzędne
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.image_path = None
         self.setWindowTitle("PyQt6 Lab")
         self.setGeometry(100, 100, 1240, 720)
         self.createMenu()
@@ -76,6 +78,9 @@ class Window(QMainWindow):
 
         self.tab_1.layout = None
         self.tab_1.layout = QGridLayout()
+        self.tab_1.image_label = QLabel("Brak obrazu")
+        self.tab_1.layout.addWidget(self.tab_1.image_label, 0, 0)
+        self.tab_1.setLayout(self.tab_1.layout)
 
         self.tab_2.layout = None
         self.tab_2.layout = QGridLayout()
@@ -122,9 +127,119 @@ class Window(QMainWindow):
         if file_dialog.exec():
             selected_files = file_dialog.selectedFiles()
             if selected_files:
-                image_path = selected_files[0]
+                self.image_path = selected_files[0]
                 # Tu możesz dodać kod do wyświetlania obrazu w zakładce 1
-                self.statusBar().showMessage(f"Wybrano plik: {image_path}")
+                self.statusBar().showMessage(f"Wybrano plik: {self.image_path}")
+                self.displayImageOnTab1(self.image_path)
+
+    def displayImageOnTab1(self, image_path):
+        pixmap = QPixmap(image_path)
+        if not pixmap.isNull():
+            self.tab_1.image_label.setPixmap(
+                pixmap.scaled(
+                    400,
+                    400,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+            )
+            self.tab_1.image_label.setText(
+                ""
+            )  # Usunięcie tekstu jeśli obraz jest wyświetlany
+        else:
+            self.tab_1.image_label.setText("Nie można załadować obrazu")
+
+    # Funkcja czyszcząca pola tekstowe
+    def ClearTxtBox(self):
+        self.title_field.clear()
+        self.content_field.clear()
+        self.statusBar().showMessage("Wyczyszczono pola tekstowe")
+
+    def OpenTxtFile(self):
+        file_dialog = QFileDialog(self)
+        file_dialog.setNameFilter("Text files (*.txt);;All files (*.*)")
+        if file_dialog.exec():
+            selected_files = file_dialog.selectedFiles()
+            if selected_files:
+                txt_path = selected_files[0]
+                try:
+                    with open(txt_path, "r", encoding="utf-8") as file:
+                        content = file.read()
+                        # Wstaw nazwę pliku jako tytuł
+                        import os
+
+                        filename = os.path.basename(txt_path)
+                        self.title_field.setText(filename)
+                        # Wstaw zawartość pliku do pola tekstowego
+                        self.content_field.setPlainText(content)
+                        self.statusBar().showMessage(f"Otwarto plik: {txt_path}")
+                except Exception as e:
+                    self.statusBar().showMessage(
+                        f"Błąd podczas otwierania pliku: {str(e)}"
+                    )
+
+    # Funkcja zapisująca zawartość pól tekstowych
+    def SaveTxtFile(self):
+        title = self.title_field.text()
+        content = self.content_field.toPlainText()
+
+        if not title and not content:
+            self.statusBar().showMessage("Brak treści do zapisania")
+            return
+
+        # Jeśli brak tytułu, użyj domyślnej nazwy
+        if not title:
+            title = "untitled.txt"
+
+        # Sprawdź czy tytuł zawiera rozszerzenie, jeśli nie - dodaj .txt
+        if not title.endswith(".txt"):
+            title += ".txt"
+
+        try:
+            with open(title, "w", encoding="utf-8") as file:
+                file.write(content)
+            self.statusBar().showMessage(f"Zapisano plik: {title}")
+        except Exception as e:
+            self.statusBar().showMessage(f"Błąd podczas zapisywania: {str(e)}")
+
+    def SaveAsTxtFile(self):
+        title = self.title_field.text()
+        content = self.content_field.toPlainText()
+
+        if not title and not content:
+            self.statusBar().showMessage("Brak treści do zapisania")
+            return
+
+        # Okno dialogowe do wyboru lokalizacji i nazwy pliku
+        file_dialog = QFileDialog(self)
+        file_dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
+        file_dialog.setNameFilter("Text files (*.txt);;All files (*.*)")
+        file_dialog.setDefaultSuffix("txt")
+
+        # Jeśli jest tytuł, użyj go jako domyślną nazwę
+        if title:
+            # Usuń rozszerzenie jeśli już istnieje, zostanie dodane automatycznie
+            if title.endswith(".txt"):
+                title = title[:-4]
+            file_dialog.selectFile(title)
+
+        if file_dialog.exec():
+            selected_files = file_dialog.selectedFiles()
+            if selected_files:
+                file_path = selected_files[0]
+                try:
+                    with open(file_path, "w", encoding="utf-8") as file:
+                        file.write(content)
+
+                    # Zaktualizuj tytuł na podstawie wybranej nazwy pliku
+                    import os
+
+                    filename = os.path.basename(file_path)
+                    self.title_field.setText(filename)
+
+                    self.statusBar().showMessage(f"Zapisano plik jako: {file_path}")
+                except Exception as e:
+                    self.statusBar().showMessage(f"Błąd podczas zapisywania: {str(e)}")
 
     # Funkcja czyszcząca pola tekstowe
     def ClearTxtBox(self):
