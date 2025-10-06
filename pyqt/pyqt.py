@@ -27,7 +27,6 @@ class Window(QMainWindow):
         # Dodanie do paska listy rozwijalnej o nazwie File
         self.fileMenu = self.menu.addMenu("File")
         self.actionExit = QAction("Exit", self)
-        self.actionExit.setShortcut(QKeySequence("Ctrl+Q"))
         self.actionExit.triggered.connect(self.close)
         self.fileMenu.addAction(self.actionExit)
 
