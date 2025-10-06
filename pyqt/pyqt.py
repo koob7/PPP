@@ -33,7 +33,7 @@ class Window(QMainWindow):
 
         self.task1Menu = self.menu.addMenu("Task 1")
         self.actionOpen = QAction("Open file", self)
-        self.actionOpen.setShortcut("Ctrl+O")
+        self.actionOpen.setShortcut("Ctrl+G")
         self.actionOpen.triggered.connect(self.openImageDialog)
         self.task1Menu.addAction(self.actionOpen)
 
@@ -176,8 +176,8 @@ class Window(QMainWindow):
         if not pixmap.isNull():
             self.tab_1.image_label.setPixmap(
                 pixmap.scaled(
-                    400,
-                    400,
+                    600,
+                    600,
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation,
                 )
