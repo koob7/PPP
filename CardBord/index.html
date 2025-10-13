@@ -10,18 +10,169 @@
 
 <body>
     <a-scene>
-        <a-assets>
-            <img id="skyTexture" crossorigin="anonymous"
-                src="https://cdn.aframe.io/360-image-gallery-boilerplate/img/sechelt.jpg">
-        </a-assets>
-
-        <a-sky src="#skyTexture" rotation="0 -130 0"></a-sky>
-        <a-entity position="0 1.6 0">
-            <a-camera></a-camera>
+        <a-entity id="cameraRig" position="0 0 0">
+            <a-entity id="camera" position="0 2 6" rotation="0 0 0">
+                <a-camera></a-camera>
+            </a-entity>
         </a-entity>
 
-        <a-text value="Sky Texture" width="6" position="-2 2.25 0" rotation="0 90 0"></a-text>
+
+        <!--<a-text value="Sky Texture" width="6" position="-2 2.25 0" rotation="0 90 0"></a-text>-->
+        <a-plane height="6" width="6" position="0 1.6 -3" rotation="-90 0 0"
+            material="shader: flat; color: green;"></a-plane>
+        <a-box id="box" position="0.3 2.1 -2.65" rotation="0 45 0" color="#4CC3D9"></a-box>
+        <a-sphere id="sphere" position="-0.6 2.5 -4" radius="1" color="#EF2D5E"></a-sphere>
+        <a-cylinder id="cylinder" position="1 2.5 -4" radius="0.54" height="1.9" color="#FFC65D"></a-cylinder>
+        <a-assets>
+            <a-asset-item id="triceratops"
+                src="https://cdn.aframe.io/examples/ar/models/triceratops/scene.gltf"></a-asset-item>
+        </a-assets>
+        <!-- Static model mounted 'na sztywno' -->
+        <a-entity id="staticModel" gltf-model="#triceratops" position="0.3 2.6 -2.65" rotation="0 0 0"
+            scale="0.01 0.01 0.01"></a-entity>
+        <a-entity box2></a-entity>
     </a-scene>
+    <script>
+        AFRAME.registerComponent('box2', {
+            schema: {
+                width: { type: 'number', default: 1 },
+                height: { type: 'number', default: 1 },
+                depth: { type: 'number', default: 1 },
+                color: { type: 'color', default: '#ff0000' },
+                position: { type: 'vec3', default: { x: 0, y: 6, z: -3 } }
+            },
+
+            init: function () {
+                var data = this.data;
+                var el = this.el;
+
+                // 🔹 tworzymy box w lokalnym układzie (0,0,0)
+                this.geometry = new THREE.BoxGeometry(data.width, data.height, data.depth);
+                this.material = new THREE.MeshStandardMaterial({ color: data.color });
+                this.mesh = new THREE.Mesh(this.geometry, this.material);
+
+                el.setObject3D('mesh', this.mesh);
+
+                // 🔹 ustawiamy pozycję na encji (nie na meshu!)
+                el.setAttribute('position', data.position);
+            },
+
+            update: function (oldData) {
+                var data = this.data;
+                var el = this.el;
+
+                if (Object.keys(oldData).length === 0) { return; }
+
+                if (data.width !== oldData.width ||
+                    data.height !== oldData.height ||
+                    data.depth !== oldData.depth) {
+                    el.getObject3D('mesh').geometry = new THREE.BoxGeometry(data.width, data.height, data.depth);
+                }
+
+                if (data.color !== oldData.color) {
+                    el.getObject3D('mesh').material.color = new THREE.Color(data.color);
+                }
+            },
+
+            remove: function () {
+                this.el.removeObject3D('mesh');
+            },
+
+            // 🔹 obrót wokół własnej osi (np. wokół osi Y)
+            tick: function (time, timeDelta) {
+                const rotation = this.el.object3D.rotation;
+                rotation.z += THREE.MathUtils.degToRad(60) * (timeDelta / 1000); // 60°/s
+                rotation.x += THREE.MathUtils.degToRad(30) * (timeDelta / 1000); // 30°/s
+            }
+        });
+
+        // Add different animations to each primitive using A-Frame's animation component
+        const scene = document.querySelector('a-scene');
+
+        function addAnimations() {
+            const box = document.getElementById('box');
+            const sphere = document.getElementById('sphere');
+            const cylinder = document.getElementById('cylinder');
+            const camera = document.getElementById('camera');
+            const lookTarget = new THREE.Vector3(0, 1.6, -3);
+            camera.object3D.lookAt(lookTarget);
+            const cameraRig = document.getElementById('cameraRig');
+
+            if (box) {
+                // Continuous rotation on Y (slightly more than 360 to show motion)
+                box.setAttribute('animation__rot', 'property: rotation; to: 0 405 0; dur: 4000; easing: linear; loop: true;');
+            }
+
+            if (sphere) {
+                // Pulse material color between original and bright green
+                sphere.setAttribute('animation__color', 'property: material.color; to: #00FF00; dur: 1500; dir: alternate; loop: true; easing: easeInOutQuad;');
+            }
+
+            if (cylinder) {
+                // Scale up and down to create a pulsing effect
+                cylinder.setAttribute('animation__scale', 'property: scale; to: 1.25 1.25 1.25; dur: 200; dir: alternate; loop: true; easing: easeInOutSine;');
+            }
+
+            // Automatic camera path: move the camera through predefined waypoints
+            if (camera) {
+
+                const THREE = AFRAME.THREE;
+                const path = [
+                    new THREE.Vector3(3, 1.6, -6),
+                    new THREE.Vector3(-3, 1.6, -6),
+                    new THREE.Vector3(-3, 1.6, 0),
+                    new THREE.Vector3(3, 1.6, 0),
+
+
+
+                ];
+
+                let idx = 0;
+                let start = null;
+                const segmentDuration = 6000; // ms per segment
+
+                function animateCamera(ts) {
+                    if (!start) start = ts;
+                    const elapsed = ts - start;
+                    const t = Math.min(elapsed / segmentDuration, 1);
+
+                    const from = path[idx];
+                    const to = path[(idx + 1) % path.length];
+                    const pos = new THREE.Vector3().lerpVectors(from, to, t);
+
+                    // Move camera (object3D) to interpolated position
+                    camera.object3D.position.copy(pos);
+
+                    // Make camera look at the scene center (adjust as needed)
+                    // Move camera (object3D) to interpolated position
+                    camera.object3D.position.copy(pos);
+
+                    // Make camera look at the scene center (adjust as needed)
+                    const lookTarget = new THREE.Vector3(0, 1.6, -3);
+                    camera.object3D.lookAt(lookTarget);
+                    camera.object3D.rotateY(Math.PI); // 🔹 naprawa odwrotnego patrzenia
+
+
+                    if (t >= 1) {
+                        idx = (idx + 1) % path.length;
+                        start = ts;
+                    }
+                    requestAnimationFrame(animateCamera);
+                }
+
+                requestAnimationFrame(animateCamera);
+            }
+
+        }
+
+        if (scene && scene.hasLoaded) {
+            addAnimations();
+        } else if (scene) {
+            scene.addEventListener('loaded', addAnimations);
+        } else {
+            window.addEventListener('DOMContentLoaded', addAnimations);
+        }
+    </script>
 </body>
 
 </html>
