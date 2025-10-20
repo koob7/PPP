@@ -3,8 +3,6 @@ from typing import Tuple
 from pathlib import Path
 import sys
 
-# from mono import convert_to_mono
-
 
 def draw_1(bitmap):
     homex, homey = t.pos()
@@ -27,17 +25,20 @@ def draw_2(bitmap):
     for row in bitmap:
         t.penup()
         t.setpos((homex, homey))
-        for i, pixel in enumerate(row, start=0):
-            pd = False
+        pd = False
+        for i, pixel in enumerate(row):
             if pixel == 1:
-                pass
+                if pd:
+                    t.penup()
+                    pd = False
             else:
                 t.setpos(homex + i, homey)
                 if not pd:
                     t.pendown()
+                    pd = True
                 t.forward(1)
-                if row[i + 1] == 1:
-                    t.penup()
+        if pd:
+            t.penup()
         homey -= 1
 
 
@@ -78,7 +79,6 @@ def convert_to_mono(path: str, size: Tuple[int, int]):
     img = Image.open(path).convert("L")
     img = img.resize(size)
     arr = np.array(img)
-    # Threshold to create a monochrome (0/1) bitmap
     threshold = 128
     monochrome_table = (arr < threshold).astype(int)
     return monochrome_table
@@ -88,8 +88,6 @@ if __name__ == "__main__":
     t.speed("fastest")
     t.penup()
     t.setpos(-400, 400)
-    # Resolve image path relative to this script file so running from a
-    # different current working directory still finds the image.
     script_dir = Path(__file__).resolve().parent
     img_path = script_dir / "happy.jpeg"
     if not img_path.exists():
@@ -102,7 +100,7 @@ if __name__ == "__main__":
         print(f"Failed to open or convert image: {e}")
         sys.exit(1)
 
-    function_to_use = 0
+    function_to_use = 1
     functions = {0: draw_1, 1: draw_2, 2: draw_3}
     functions[function_to_use](table)
     t.done()
