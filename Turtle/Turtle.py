@@ -1,4 +1,9 @@
 import turtle
+from typing import Tuple
+from pathlib import Path
+import sys
+import numpy as np
+from PIL import Image
 
 t = turtle.Turtle()
 t.speed("fastest")
@@ -60,6 +65,44 @@ class FractalTurtle:
             self.t.forward(x / 3)
 
 
+def draw_3(bitmap):
+    only_flips = []
+    for row in bitmap:
+        flip_row = []
+        cur_pix = 1
+        for i, pixel in enumerate(row):
+            if pixel != cur_pix:
+                cur_pix = pixel
+                flip_row.append(i)
+        only_flips.append(flip_row)
+
+    homex, homey = t.pos()
+    for row in only_flips:
+        t.penup()
+        t.setpos((homex, homey))
+        for i, flip in enumerate(row):
+            if i % 2 == 1:
+                continue
+            else:
+                t.setpos(homex + row[i], homey)
+                t.pendown()
+                if len(row) > i + 1:
+                    t.forward(row[i + 1] - row[i])
+                else:
+                    t.forward(len(bitmap[0]) - row[i])
+                t.penup()
+        homey -= 1
+
+
+def convert_to_mono(path: str, size: Tuple[int, int]):
+    img = Image.open(path).convert("L")
+    img = img.resize(size)
+    arr = np.array(img)
+    threshold = 128
+    monochrome_table = (arr < threshold).astype(int)
+    return monochrome_table
+
+
 fr = FractalTurtle(t)
 # # ZADANIE 1
 # x = 60
@@ -81,7 +124,17 @@ fr = FractalTurtle(t)
 # x = 400
 # fr.test(x)
 
-# ZADANIE 5
-
-
-turtle.done()
+# # ZADANIE 5
+# t.penup()
+# script_dir = Path(__file__).resolve().parent
+# img_path = script_dir / "happy.jpeg"
+# if not img_path.exists():
+#     print(f"Image not found: {img_path}")
+#     sys.exit(1)
+# try:
+#     table = convert_to_mono(str(img_path), (26, 26))
+# except Exception as e:
+#     print(f"Failed to open or convert image: {e}")
+#     sys.exit(1)
+# draw_3(table)
+# turtle.done()
