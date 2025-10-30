@@ -107,34 +107,39 @@ fr = FractalTurtle(t)
 # # ZADANIE 1
 # x = 60
 # fr.Kwadrat(x)
+# turtle.done()
 
 # # ZADANIE 2
 # x = 60
 # fr.KwadratFraktal(x)
+# turtle.done()
 
 # # ZADANIE 3
 # x = 250
 # fr.Sierpisnki(x)
+# turtle.done()
 
 # # ZADANIE 4a
 # x = 400
 # fr.moj(x)
+# turtle.done()
 
 # # ZADANIE 4b
 # x = 400
 # fr.test(x)
-
-# # ZADANIE 5
-# t.penup()
-# script_dir = Path(__file__).resolve().parent
-# img_path = script_dir / "happy.jpeg"
-# if not img_path.exists():
-#     print(f"Image not found: {img_path}")
-#     sys.exit(1)
-# try:
-#     table = convert_to_mono(str(img_path), (26, 26))
-# except Exception as e:
-#     print(f"Failed to open or convert image: {e}")
-#     sys.exit(1)
-# draw_3(table)
 # turtle.done()
+
+# ZADANIE 5
+t.penup()
+script_dir = Path(__file__).resolve().parent
+img_path = script_dir / "happy.jpeg"
+if not img_path.exists():
+    print(f"Image not found: {img_path}")
+    sys.exit(1)
+try:
+    table = convert_to_mono(str(img_path), (26, 26))
+except Exception as e:
+    print(f"Failed to open or convert image: {e}")
+    sys.exit(1)
+draw_3(table)
+turtle.done()

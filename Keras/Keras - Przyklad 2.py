@@ -1,0 +1,120 @@
+# Ładowanie potrzebych modułów
+# MNIST - zbiór obrazów z odręcznie pisanymi cyframi od 0 do 9
+# Sequential- model sekwencyjny sieci neuronowej
+try:
+    from keras.datasets import mnist
+    from keras.models import Sequential
+    from keras.layers import Dense
+    from keras.utils import to_categorical
+except:
+    from keras.datasets import mnist
+    from keras.models import Sequential
+    from keras.layers import Dense
+    from keras.utils import to_categorical
+from matplotlib import pyplot as plt
+from keras import layers
+
+# Wczytywanie danych
+(train_images, train_labels), (test_images, test_labels) = mnist.load_data()
+
+# Przekształcanie wielkości obrazów do 28x28x1 pixel oraz ich normalizacja
+train_images = train_images.reshape((60000, 28, 28, 1))
+train_images = train_images.astype("float32") / 255
+
+test_images = test_images.reshape((10000, 28, 28, 1))
+test_images = test_images.astype("float32") / 255
+
+# Pobranie i stworzenie listy klas dla danych
+train_labels = to_categorical(train_labels)
+test_labels = to_categorical(test_labels)
+
+# Tworzenie modelu sieci
+model = Sequential()
+
+# Dodanie pierwszej warsty konwolucyjnej złożonej z 32 kerneli o wielkości 3x3
+model.add(layers.Conv2D(32, (3, 3), activation="relu", input_shape=(28, 28, 1)))
+
+# Dodanie warstwy zmiejszającej wielkość powstałych obrazów z warstwy konwolucyjnej
+model.add(layers.MaxPooling2D((2, 2)))
+
+# Dodanie drugiej warstwy konwolucyjnej
+model.add(layers.Conv2D(64, (3, 3), activation="relu"))
+
+# Dodanie warstwy spłaszczającej dane 2D do 1D
+
+model.add(layers.Flatten())
+
+# Dodanie warstwy gęstej odpowiedzialnej za klasę - liczbla neuronow = liczba klas
+model.add(layers.Dense(10, activation="softmax"))
+
+# Kompilacja modelu
+model.compile(
+    optimizer="rmsprop", loss="categorical_crossentropy", metrics=["accuracy"]
+)
+
+# Uczenie modelu danymi
+# epoch - liczba iteracji
+# batch_size - liczba elementów z danych treningowych branych podczas pojedyńczego przejścia funkcji uczącej
+history = model.fit(
+    train_images,
+    train_labels,
+    validation_data=(test_images, test_labels),
+    epochs=20,
+    batch_size=32,
+    verbose=1,
+)
+
+print(history.history)
+# wyświetlenie wykresu przedstawiającego historię uczenia sieci
+plt.subplot(2, 1, 1)
+plt.plot(history.history["accuracy"])
+plt.plot(history.history["val_accuracy"])
+plt.title("model accuracy")
+plt.ylabel("accuracy")
+plt.xlabel("epoch")
+plt.legend(["train", "val"], loc="upper left")
+
+plt.subplot(2, 1, 2)
+plt.plot(history.history["loss"])
+plt.plot(history.history["val_loss"])
+plt.title("model loss")
+plt.ylabel("loss")
+plt.xlabel("epoch")
+plt.legend(["train", "val"], loc="upper left")
+plt.show()
+
+# -----------------------------
+# Zapis i odczyt modelu oraz wag
+# -----------------------------
+# Zapisanie całego modelu (architektura + wagi + stan optymalizatora)
+model.save("mnist_2_model.keras")
+# Zapisanie tylko wag
+# Keras (nowsze wersje) oczekuje, że plik wag HDF5 będzie kończył się na ".weights.h5"
+model.save_weights("mnist_2.weights.h5")
+print("Model i wagi zapisane: mnist_2_model.keras, mnist_2.weights.h5")
+
+# Przykład: wczytanie całego modelu
+from tensorflow.keras.models import load_model
+
+loaded_model = load_model("mnist_2_model.keras")
+print("Wczytany model (cały):", loaded_model)
+
+# Przykład: wczytanie wag do nowo zbudowanej architektury (weights-only)
+# Tworzymy taką samą architekturę konwolucyjną jak model wytrenowany powyżej i ładujemy zapisane wagi.
+new_model = Sequential()
+new_model.add(layers.Conv2D(32, (3, 3), activation="relu", input_shape=(28, 28, 1)))
+new_model.add(layers.MaxPooling2D((2, 2)))
+new_model.add(layers.Conv2D(64, (3, 3), activation="relu"))
+new_model.add(layers.Flatten())
+new_model.add(layers.Dense(10, activation="softmax"))
+new_model.compile(
+    optimizer="rmsprop", loss="categorical_crossentropy", metrics=["accuracy"]
+)
+new_model.load_weights("mnist_2.weights.h5")
+print("Wczytano wagi do nowej architektury.")
+
+# Opcjonalna szybka ewaluacja wczytanych modeli (nie uczy, tylko testuje)
+loss, acc = loaded_model.evaluate(test_images, test_labels, verbose=0)
+print(f"Loaded model - test loss: {loss:.4f}, test acc: {acc:.4f}")
+loss2, acc2 = new_model.evaluate(test_images, test_labels, verbose=0)
+print(f"Weights-only model - test loss: {loss2:.4f}, test acc: {acc2:.4f}")
