@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Leaflet Map</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="map-wrap">
+        <div id="map"></div>
+    </div>
+
+    <button class="map-toggle-btn" id="mapToggle" title="Przełącz mapę">Powiększ/Przytnij</button>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+        // create map centered on London as default
+
+        window.map = L.map('map').setView([50.2, 18.67461963476678], 13);
+
+        // OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // add a marker with a popup
+        const marker = L.marker([50.29113550308671, 18.67461963476678]).addTo(map)
+            .bindPopup('Politechnika Śląska').openPopup();
+        // add a circle
+        const circle = L.circle([50.292081, 18.677144], {
+            color: 'blue',
+            fillColor: '#30f',
+            fillOpacity: 0.5,
+            radius: 500
+        }).addTo(map).bindPopup('Obszar Politechniki Śląskiej');
+        const circle2 = L.circle([50.195996, 18.670921], {
+            color: 'blue',
+            fillColor: '#30f',
+            fillOpacity: 0.5,
+            radius: 150
+        }).addTo(map).bindPopup('Obszar Politechniki Śląskiej');
+        // draw a polygon
+        const bounds = [[50.2, 18.67], [50.24, 18.68], [50.240, 18.685], [50.199869, 18.674355]];
+        const polygon = L.polygon(bounds, {
+            color: 'green', weight: 1
+        }).addTo(map).bindPopup('Przykładowy wielokąt');
+
+        // draw a polygon
+        const bounds2 = [[50.254230, 18.684654], [50.179976, 18.742332], [50.188110, 18.601227]];
+        const polygon2 = L.polygon(bounds2, {
+            color: 'yellow', weight: 1
+        }).addTo(map).bindPopup('Przykładowy wielokąt');
+
+        // draw a heart-shaped polygon
+        const bounds3 = [[50.106928, 18.223915], [50.118377, 18.237991], [50.125201, 18.257561],
+        [50.121899, 18.277473], [50.109791, 18.286743], [50.086226, 18.272839],
+        [50.063310, 18.235588], [50.047660, 18.217735], [50.065734, 18.197136],
+        [50.090851, 18.172760], [50.115295, 18.166237], [50.128942, 18.179283],
+        [50.127182, 18.200569], [50.121238, 18.214645]];
+        const polygon3 = L.polygon(bounds3, {
+            color: 'red', weight: 1
+        }).addTo(map).bindPopup('Przykładowy wielokąt');
+
+
+        // scale control
+        L.control.scale().addTo(map);
+
+        // simple "Locate" control to use browser geolocation
+        const locateControl = L.control({ position: 'topleft' });
+        locateControl.onAdd = function () {
+            const btn = L.DomUtil.create('button', 'leaflet-bar');
+            btn.type = 'button';
+            btn.title = 'Show my location';
+            btn.innerText = 'Locate';
+            L.DomEvent.disableClickPropagation(btn);
+            btn.onclick = () => {
+                if (!navigator.geolocation) {
+                    alert('Geolocation not supported by your browser.');
+                    return;
+                }
+                map.locate({ setView: true, maxZoom: 16 });
+            };
+            return btn;
+        };
+        locateControl.addTo(map);
+
+        // show a marker when location is found
+        map.on('locationfound', function (e) {
+            L.marker(e.latlng).addTo(map).bindPopup('You are here').openPopup();
+        });
+
+        map.on('locationerror', function () {
+            alert('Unable to retrieve your location.');
+        });
+
+        // click on map to add a marker (pinezka)
+        const clickMarkers = [];
+        map.on('click', function (e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+            const m = L.marker(e.latlng).addTo(map)
+                .bindPopup(`Pinezka<br>Lat: ${lat}<br>Lng: ${lng}<br><small>Kliknij marker, aby usunąć</small>`)
+                .openPopup();
+            // remove marker when it's clicked
+            m.on('click', function () {
+                map.removeLayer(m);
+            });
+            clickMarkers.push(m);
+        });
+
+        // toggle fullscreen/smaller map
+        const mapToggle = document.getElementById('mapToggle');
+        mapToggle.addEventListener('click', function () {
+            const mapEl = document.getElementById('map');
+            const isFs = mapEl.classList.toggle('fullscreen');
+            // when size changes, Leaflet needs invalidateSize to redraw tiles
+            setTimeout(() => map.invalidateSize(), 250);
+            mapToggle.innerText = isFs ? 'Przytnij' : 'Powiększ';
+        });
+    </script>
+
+
+    <input type="text" id="cityInput" placeholder="Podaj nazwę miasta">
+    <button onclick="searchCity()">Szukaj</button>
+
+    <ul id="resultList"></ul>
+
+</body>
+
+</html>
