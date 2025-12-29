@@ -1,0 +1,35 @@
+<html>
+
+<head>
+    <link rel="icon" href="/static/favicon.ico">
+</head>
+
+<body>
+    <h1>
+        Books
+    </h1>
+    <table>
+        <thead>
+            <td>Author</td>
+            <td>Title</td>
+        </thead>
+
+        {% for user in users %}
+        <tr>
+            <td>{{user[0]}}</td>
+            <td>{{user[1]}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h1>
+        Add book
+    </h1>
+    <form method=post action="/add_book">
+        Author: <input type=text name=author>
+        Title: <input type=text name=title>
+        <input type=submit value="Wyślij zapytanie">
+    </form>
+</body>
+
+</html>
