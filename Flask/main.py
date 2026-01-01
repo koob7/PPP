@@ -72,13 +72,13 @@ def index():
 
         if user_data and user_data[0]:
             return (
-                render_template("t4.html", books=books, userdata=session["user"])
+                render_template("t2.html", books=books, userdata=session["user"])
                 + "<a href='/users'> users </a>"
                 + "<br><a href='/logout'> logout </a>"
             )
         else:
             return (
-                render_template("t4.html", books=books, userdata=session["user"])
+                render_template("t2.html", books=books, userdata=session["user"])
                 + "<br><a href='/logout'> logout </a>"
             )
     else:
@@ -109,7 +109,7 @@ def users():
     users = cur.fetchall()
     con.close()
 
-    return render_template("t5.html", users=users) + "<br><a href='/'> home </a>"
+    return render_template("t3.html", users=users) + "<br><a href='/'> home </a>"
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -239,7 +239,7 @@ def user(user_identifier):
     if not selected_user:
         return "User not found. <br><a href='/users'> back </a>"
 
-    return render_template("t6.html", selected_user=selected_user)
+    return render_template("t4.html", selected_user=selected_user)
 
 
 # Uruchomienie aplikacji w trybie debug
