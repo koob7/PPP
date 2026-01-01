@@ -20,10 +20,33 @@ def create_db():
     conn = sqlite3.connect(DATABASE)
     # Stworzenie tabeli w bazie danych za pomocą sqlite3
     conn.execute(
-        "CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, password TEXT, admin boolean)"
+        "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, password TEXT, admin boolean)"
     )
-    conn.execute("CREATE TABLE books (title TEXT, author TEXT)")
+    conn.execute("CREATE TABLE IF NOT EXISTS books (title TEXT, author TEXT)")
+
+    # Tworzenie domyślnych użytkowników
+    conn.execute(
+        "INSERT INTO users (username, password, admin) VALUES (?, ?, ?)",
+        ("user", "user", 0),
+    )
+    conn.execute(
+        "INSERT INTO users (username, password, admin) VALUES (?, ?, ?)",
+        ("admin", "admin", 1),
+    )
+    conn.execute(
+        "INSERT INTO books (title, author) VALUES (?, ?)",
+        ("The Odyssey", "Homer"),
+    )
+    conn.execute(
+        "INSERT INTO books (title, author) VALUES (?, ?)",
+        ("Narnia", "C.S. Lewis"),
+    )
+    conn.execute(
+        "INSERT INTO books (title, author) VALUES (?, ?)",
+        ("Hamlet", "William Shakespeare"),
+    )
     # Zakończenie połączenia z bazą danych
+    conn.commit()
     conn.close()
 
     return index()
@@ -36,40 +59,82 @@ def index():
     # Pobranie danych z tabeli
     cur = con.cursor()
     cur.execute("select * from books")
-    users = cur.fetchall()
+    books = cur.fetchall()
+    con.close()
 
     if "user" in session:
-        return (
-            render_template("t4.html", userdata=session["user"])
-            + "<a href='/users'> users </a>"
-            + "<br><a href='/logout'> logout </a>"
-        )
+        con = sqlite3.connect(DATABASE)
+        cur = con.cursor()
+        # Sprawdzenie czy użytkownik ma uprawnienia admina
+        cur.execute("SELECT admin FROM users WHERE username = ?", (session["user"],))
+        user_data = cur.fetchone()
+        con.close()
+
+        if user_data and user_data[0]:
+            return (
+                render_template("t4.html", books=books, userdata=session["user"])
+                + "<a href='/users'> users </a>"
+                + "<br><a href='/logout'> logout </a>"
+            )
+        else:
+            return (
+                render_template("t4.html", books=books, userdata=session["user"])
+                + "<br><a href='/logout'> logout </a>"
+            )
     else:
         return render_template("t1.html")
 
 
 @app.route("/users", methods=["GET", "POST"])
 def users():
-    con = sqlite3.connect(DATABASE)
 
-    # Pobranie danych z tabeli
+    # Sprawdzenie czy użytkownik jest zalogowany
+    if "user" not in session:
+        return "Access denied. Please <a href='/'> login </a> to view users."
+
+    con = sqlite3.connect(DATABASE)
     cur = con.cursor()
+
+    # Sprawdzenie czy użytkownik ma uprawnienia admina
+    cur.execute("SELECT admin FROM users WHERE username = ?", (session["user"],))
+    user_data = cur.fetchone()
+
+    # Jeżeli użytkownik nie istnieje lub nie jest adminem
+    if not user_data or not user_data[0]:
+        con.close()
+        return "Access denied. Admin privileges required. <br><a href='/'> home </a>"
+
+    # Pobranie danych z tabeli użytkowników
     cur.execute("select * from users")
     users = cur.fetchall()
+    con.close()
 
     return render_template("t5.html", users=users) + "<br><a href='/'> home </a>"
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    con = sqlite3.connect(DATABASE)
+    if request.method == "POST":
+        username = request.form["login"]
+        password = request.form["password"]
 
-    # Pobranie danych z tabeli
-    cur = con.cursor()
-    # cur.execute("select * from users")
-    users = cur.fetchall()
-    session["user"] = "username"
-    return "Sesja została utworzona <br> <a href='/'> Dalej </a> "
+        con = sqlite3.connect(DATABASE)
+        cur = con.cursor()
+        # Check if user exists with matching password
+        cur.execute(
+            "SELECT username FROM users WHERE username = ? AND password = ?",
+            (username, password),
+        )
+        user = cur.fetchone()
+        con.close()
+
+        if user:
+            session["user"] = user[0]
+            return redirect(url_for("index"))
+        else:
+            return "Invalid credentials. Please try again. " + index()
+
+    return redirect(url_for("index"))
 
 
 @app.route("/add_book", methods=["POST"])
@@ -80,6 +145,15 @@ def add_book():
     # Dodanie użytkownika do bazy danych
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
+
+    # Sprawdzenie czy użytkownik już istnieje
+    cur.execute("SELECT title FROM books WHERE title = ?", (title,))
+    existing_book = cur.fetchone()
+
+    if existing_book:
+        con.close()
+        return "!Book already exists.!" + index()
+
     cur.execute("INSERT INTO books (author,title) VALUES (?,?)", (author, title))
     con.commit()
     con.close()
@@ -97,6 +171,15 @@ def add_user():
     # Dodanie użytkownika do bazy danych
     con = sqlite3.connect(DATABASE)
     cur = con.cursor()
+
+    # Sprawdzenie czy użytkownik już istnieje
+    cur.execute("SELECT username FROM users WHERE username = ?", (login,))
+    existing_user = cur.fetchone()
+
+    if existing_user:
+        con.close()
+        return "!User already exists.!" + users()
+
     cur.execute(
         "INSERT INTO users (username,password,admin) VALUES (?,?,?)",
         (login, password, admin),
@@ -116,7 +199,47 @@ def logout():
         # Przekierowanie klienta do strony początkowej
         redirect(url_for("index"))
 
-    return "Wylogowano <br>  <a href='/'> Powrót </a>"
+    return redirect(url_for("index"))
+
+
+@app.route("/user/<user_identifier>", methods=["GET"])
+def user(user_identifier):
+    # Sprawdzenie czy użytkownik jest zalogowany
+    if "user" not in session:
+        return "Access denied. Please <a href='/'> login </a>"
+    con = sqlite3.connect(DATABASE)
+    cur = con.cursor()
+
+    # Sprawdzenie czy zalogowany użytkownik ma uprawnienia admina
+    cur.execute("SELECT admin FROM users WHERE username = ?", (session["user"],))
+    user_data = cur.fetchone()
+
+    # Jeżeli użytkownik nie jest adminem
+    if not user_data or not user_data[0]:
+        con.close()
+        return (
+            "Access denied. Admin privileges required. <br><a href='/users'> back </a>"
+        )
+
+    # Pobranie danych wybranego użytkownika po ID lub loginie
+    if user_identifier.isdigit():
+        cur.execute(
+            "SELECT id, username, password, admin FROM users WHERE id = ?",
+            (user_identifier,),
+        )
+    else:
+        cur.execute(
+            "SELECT id, username, password, admin FROM users WHERE username = ?",
+            (user_identifier,),
+        )
+
+    selected_user = cur.fetchone()
+    con.close()
+
+    if not selected_user:
+        return "User not found. <br><a href='/users'> back </a>"
+
+    return render_template("t6.html", selected_user=selected_user)
 
 
 # Uruchomienie aplikacji w trybie debug
