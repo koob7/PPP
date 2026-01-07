@@ -1,0 +1,61 @@
+# Definicja obsługi zapytań http
+[http]
+  # Definicja routingu
+  [http.routers]
+     
+    # (a) http://localhost:8000/app1 -> Kontener 1 i 2
+    [http.routers.route-app1]
+      rule = "PathPrefix(`/app1`)"
+      service = "service-app1"
+      entryPoints = ["web"]
+      middlewares = ["strip-app1"] # Usuwa /app1 ze ścieżki
+
+    # (b) http://localhost:8000/app2 -> Kontener 3 i 4
+    [http.routers.route-app2]
+      rule = "PathPrefix(`/app2`)"
+      service = "service-app2"
+      entryPoints = ["web"]
+      middlewares = ["strip-app2"] # Usuwa /app2 ze ścieżki
+
+    # (c) http://localhost:8002/ -> Kontener 1 i 3
+    [http.routers.route-mixed]
+      rule = "PathPrefix(`/`)"
+      service = "service-mixed"
+      entryPoints = ["web2"] # Ważne: to jest port 8002 zdefiniowany w traefic-config.toml
+
+  # --- MIDDLEWARES (opcjonalne, ale zalecane dla (a) i (b)) ---
+  [http.middlewares]
+    [http.middlewares.strip-app1.stripPrefix]
+      prefixes = ["/app1"]
+    [http.middlewares.strip-app2.stripPrefix]
+      prefixes = ["/app2"]
+
+
+  # Definicja dostępnych serwisów
+  [http.services]
+    # Zdefiniowanie serwisów dostepnych w tworzonym systemie
+    # loadBalancer - serwisy umozliwiają definiowanie kliku serwerów, które mają być używane zamiennie, 
+    #                tak aby zrównowazyć obciążenie pomiędzy nimi.
+    #                Jeżeli wykorzystywany jest jeden to poprostu dodajemy jeden serwer
+
+# Serwis dla (a): Kontener 1 (5000) i 2 (5001)
+    [http.services.service-app1.loadBalancer]
+      [[http.services.service-app1.loadBalancer.servers]]
+        url = "http://127.0.0.1:5000"
+      [[http.services.service-app1.loadBalancer.servers]]
+        url = "http://127.0.0.1:5001"
+
+    # Serwis dla (b): Kontener 3 (5002) i 4 (5003)
+    [http.services.service-app2.loadBalancer]
+      [[http.services.service-app2.loadBalancer.servers]]
+        url = "http://127.0.0.1:5002"
+      [[http.services.service-app2.loadBalancer.servers]]
+        url = "http://127.0.0.1:5003"
+
+    # Serwis dla (c): Kontener 1 (5000) i 3 (5002)
+    [http.services.service-mixed.loadBalancer]
+      [[http.services.service-mixed.loadBalancer.servers]]
+        url = "http://127.0.0.1:5000"
+      [[http.services.service-mixed.loadBalancer.servers]]
+        url = "http://127.0.0.1:5002"
+

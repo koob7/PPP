@@ -1,4 +1,4 @@
-cd 'D:\Programowanie\Github\PPP\Sieci pretrenowane\'
+cd "D:\Programowanie\Github\PPP\Sieci pretrenowane\"
 .\.venv\Scripts\activate
 python -m Orange.canvas
 python -m jupyterlab

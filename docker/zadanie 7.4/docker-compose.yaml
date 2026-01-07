@@ -1,0 +1,113 @@
+version: '3.9'
+
+services:
+  reverse-proxy:
+    # Oficjalny obraz Traefik
+    image: traefik:latest
+    ports:
+      # Port HTTP dla zadan A i B (zdefiniowany jako 'web' w toml)
+      - "8000:8000"
+      # Panel zarzadzania (Dashboard)
+      - "8001:8001"
+      # NOWY PORT dla zadania C (zdefiniowany jako 'web2'/'web-extra' w toml)
+      - "8002:8002"
+    volumes:
+      # Aby Traefik mogl nasluchiwac eventow dockera
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Eksport pliku z konfiguracja na maszyne
+      - ./toml:/etc/traefik
+    networks:
+     - lab
+
+  app1: # KONTENER 1
+    # Budowanie obrazu z lokalnego katalogu ./app1/
+    build: ./app1/
+    networks:
+     - lab
+    labels:
+      # Wlaczamy obsluge Traefika dla tego kontenera
+      - "traefik.enable=true"
+      
+      # --- ZADANIE (A): http://localhost:8000/app1 ---
+      # Regula routera: przechwytuje zapytania zaczynajace sie od /app1
+      - "traefik.http.routers.app1-router.rule=PathPrefix(`/app1`)"
+      # Przypisanie routera do entrypointu 'web' (port 8000)
+      - "traefik.http.routers.app1-router.entrypoints=web"
+      # Przypisanie routera do serwisu 'app1' (Load Balancer)
+      - "traefik.http.routers.app1-router.service=app1"
+      # Definicja serwisu: wskazanie wewnetrznego portu kontenera
+      - "traefik.http.services.app1.loadbalancer.server.port=5001"
+      # Middleware: konfiguracja usuwania prefiksu /app1 ze sciezki
+      - "traefik.http.middlewares.strip-app1.stripprefix.prefixes=/app1"
+      # Przypiecie middleware do routera
+      - "traefik.http.routers.app1-router.middlewares=strip-app1"
+
+      # --- ZADANIE (C): http://localhost:8002/ ---
+      # Definicja drugiego routera dla tego samego kontenera (sciezka glowna /)
+      - "traefik.http.routers.mixed-router.rule=PathPrefix(`/`)"
+      # Przypisanie do entrypointu 'web2' (port 8002)
+      - "traefik.http.routers.mixed-router.entrypoints=web2"
+      # Przypisanie do nowego serwisu mieszanego 'mixed'
+      - "traefik.http.routers.mixed-router.service=mixed"
+      # Wskazanie portu wewnetrznego dla serwisu mieszanego
+      - "traefik.http.services.mixed.loadbalancer.server.port=5001"
+
+  app2: # KONTENER 2
+    build: ./app2/
+    networks:
+     - lab
+    labels:
+      - "traefik.enable=true"
+      # --- LOAD BALANCING DLA ZADANIA (A) ---
+      # Uzywamy tej samej nazwy routera co w app1
+      - "traefik.http.routers.app1-router.rule=PathPrefix(`/app1`)"
+      - "traefik.http.routers.app1-router.entrypoints=web"
+      # Podlaczenie pod ten sam serwis 'app1' co app1
+      - "traefik.http.routers.app1-router.service=app1"
+      # Zastosowanie tego samego middleware (usuwanie prefiksu)
+      - "traefik.http.routers.app1-router.middlewares=strip-app1"
+      # Wskazanie wewnetrznego portu tego kontenera dla Load Balancera
+      - "traefik.http.services.app1.loadbalancer.server.port=5002"
+
+  app3: # KONTENER 3
+    build: ./app3/
+    networks:
+     - lab
+    labels:
+      - "traefik.enable=true"
+
+      # --- ZADANIE (B): http://localhost:8000/app2 ---
+      # Regula routera: przechwytuje zapytania zaczynajace sie od /app2
+      - "traefik.http.routers.app3-router.rule=PathPrefix(`/app2`)"
+      - "traefik.http.routers.app3-router.entrypoints=web"
+      # Przypisanie do serwisu 'app3'
+      - "traefik.http.routers.app3-router.service=app3"
+      # Definicja portu wewnetrznego dla serwisu app3
+      - "traefik.http.services.app3.loadbalancer.server.port=5003"
+      # Middleware: usuwanie prefiksu /app2
+      - "traefik.http.middlewares.strip-app2.stripprefix.prefixes=/app2"
+      - "traefik.http.routers.app3-router.middlewares=strip-app2"
+
+      # --- LOAD BALANCING DLA ZADANIA (C) ---
+      # Dolaczenie do serwisu 'mixed' (zdefiniowanego w app1)
+      # Dzieki temu app1 i app3 dzialaja wspolnie pod portem 8002
+      - "traefik.http.services.mixed.loadbalancer.server.port=5003"
+
+  app4: # KONTENER 4
+    build: ./app4/
+    networks:
+     - lab
+    labels:
+      - "traefik.enable=true"
+      # --- LOAD BALANCING DLA ZADANIA (B) ---
+      # Podlaczenie pod router i serwis zdefiniowany w app3
+      - "traefik.http.routers.app3-router.rule=PathPrefix(`/app2`)"
+      - "traefik.http.routers.app3-router.entrypoints=web"
+      - "traefik.http.routers.app3-router.service=app3"
+      - "traefik.http.routers.app3-router.middlewares=strip-app2"
+      # Wskazanie wewnetrznego portu dla Load Balancera
+      - "traefik.http.services.app3.loadbalancer.server.port=5004"
+
+networks:
+  lab:
+    driver: bridge

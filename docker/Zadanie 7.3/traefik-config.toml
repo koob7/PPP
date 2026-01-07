@@ -1,0 +1,19 @@
+# Definicja portow dla poszczegolnych endpointow
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000" 
+  [entryPoints.traefik]
+    address = ":8001" 
+  [entryPoints.web2]
+    address = ":8002" 
+
+# Wlaczenie wbudowanej aplikacji do zarzadzania
+[api]
+    insecure = true
+    dashboard = true
+
+# Definicja folderu dla plikow konfiguracyjnych 
+# umozliwiajacych zarzadanie serwisami
+[providers]
+  [providers.file]
+    directory = "tomls"
