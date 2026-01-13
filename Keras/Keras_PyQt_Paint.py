@@ -13,7 +13,7 @@ from PyQt6.QtGui import QPainter, QColorConstants
 
 
 # Wielkością oraz kolorem pisaka
-PEN_WIDTH = 3
+PEN_WIDTH = 5
 PEN_COLOR = QColorConstants.White
 
 # Wielkość pola do rysowania PIXMAP_SIZE x PIXMAP_SIZE
